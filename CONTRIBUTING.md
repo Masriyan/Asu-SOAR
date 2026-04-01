@@ -1,40 +1,111 @@
-# 🤝 Contributing to ASUSOAR
+# Contributing to ASUSOAR
 
-Welcome to the **ASUSOAR** community! As an open-source Security Orchestration, Automation, and Response platform, we highly encourage developers, SOC analysts, and security engineers to get involved. 
+Welcome to the ASUSOAR community. As an open-source Security Orchestration, Automation, and Response platform, we rely on developers, SOC analysts, and security engineers to make it better. Whether you're fixing a typo, adding a new integration, or rearchitecting a feature — your contributions matter.
 
-From writing new 3rd-party tool integrations to improving the React dashboard layout, your contributions matter.
+> **Repository:** [github.com/Masriyan/Asu-SOAR](https://github.com/Masriyan/Asu-SOAR)
 
-> **Main Repository Page**: [https://github.com/Masriyan/Asu-SOAR](https://github.com/Masriyan/Asu-SOAR)
+---
 
-## How Can I Contribute?
+## Ways to Contribute
 
-### 1. **Submit Bugs and Feature Requests**
-If you find a bug or have an idea for a new feature, please open an issue in our repository tracker. 
-- Try to be as extremely specific as possible when reporting a bug. Provide Docker logs if a container failed.
-- For new features, outlining a concrete USE CASE mapping (e.g. *Why does the SOC need this?*) is very helpful.
+### Reporting Bugs
 
-### 2. **Code Contributions (Pull Requests)**
-If you want to dive into the codebase:
-1. **Fork** the project at [https://github.com/Masriyan/Asu-SOAR](https://github.com/Masriyan/Asu-SOAR)
-2. **Branch** off into your own feature (`git checkout -b feature/AmazingNewIntegration`).
-3. **Commit** your changes (`git commit -m 'Added Crowdstrike IOC Upload Node'`).
-4. **Push** your branch (`git push origin feature/AmazingNewIntegration`).
-5. Open a **Pull Request** onto the main upstream branch.
+If you find a bug, please open an issue at [github.com/Masriyan/Asu-SOAR/issues](https://github.com/Masriyan/Asu-SOAR/issues). A good bug report includes:
 
-### 3. **Building New Integrations**
-The core power of any SOAR platform is the number of tools it can talk to.
-If you are familiar with Python, you can write new HTTP wrappers for external services and drop the API definitions into the `backend/app/integrations/` directory.
+- A clear, specific title describing the problem.
+- Steps to reproduce the issue.
+- The output of `docker compose logs` for any container that failed.
+- Your host OS, Docker version, and browser (if the bug is UI-related).
 
-### 4. **Writing Documentation**
-Improving `README.md`, `FEATURES.md`, or creating tutorials/playbook templates drastically helps new users onboard faster. If you want to document a specific flow you created, feel free!
+### Requesting Features
+
+For new feature ideas, open an issue and describe your use case in concrete terms. The most useful feature requests answer the question: *"As a SOC analyst, I need to do X because Y currently takes Z minutes of manual effort."* Implementation ideas are welcome, but the use case is what matters most.
+
+### Code Contributions (Pull Requests)
+
+1. **Fork** the repository at [github.com/Masriyan/Asu-SOAR](https://github.com/Masriyan/Asu-SOAR).
+2. **Create a branch** from `main` using a descriptive name:
+   ```bash
+   git checkout -b feature/crowdstrike-ioc-upload
+   git checkout -b fix/playbook-dag-race-condition
+   git checkout -b docs/improve-install-guide
+   ```
+3. **Make your changes** following the coding standards below.
+4. **Write or update tests** for any logic you add or change.
+5. **Commit** with a clear, imperative message:
+   ```bash
+   git commit -m 'feat: add CrowdStrike IOC upload integration node'
+   git commit -m 'fix: prevent race condition in Celery DAG state transitions'
+   ```
+6. **Push** your branch and open a Pull Request against `main`.
+
+### Building New Integrations
+
+The core power of any SOAR platform is the breadth of its integrations. If you're comfortable with Python and HTTP APIs, you can add a new tool connector:
+
+1. Add a new Python module under `backend/app/integrations/<tool_name>/`.
+2. Implement the integration against ASUSOAR's standard connector interface.
+3. Add a YAML definition file that describes the connector's parameters and secrets.
+4. Document the integration in a short `README.md` within the same directory.
+5. Open a Pull Request with the integration and at minimum one example playbook YAML that uses it.
+
+### Improving Documentation
+
+Good documentation is as valuable as good code. If you find something confusing, out of date, or missing in `README.md`, `FEATURES.md`, `INSTALL.md`, `ARCHITECTURE.md`, or the GitHub Wiki — please open a PR to fix it.
+
+---
 
 ## Coding Standards
 
-- **Python (Backend)**: We enforce strict typing where possible via `Pydantic` and utilize standard formatting (`black`, `flake8`). Ensure asynchronous endpoints properly utilize `async def`.
-- **TypeScript (Frontend)**: We utilize Next.js 14 and TailwindCSS parameters. Try to modularize your UI changes into reusable `<Components />` mapping our `soc-dark` themes before building massive monolithic pages.
+### Python (Backend)
+
+- **Formatting:** Run `black .` before committing. We enforce `black` formatting with `flake8` for linting.
+- **Type hints:** Use full type annotations on all function signatures. Pydantic models must be fully typed.
+- **Async:** All FastAPI endpoint functions must use `async def`. Blocking I/O (database calls, external API calls) must be awaited or offloaded to Celery.
+- **Tests:** New endpoint logic should include at least one `pytest` test covering the happy path and one covering the main error condition.
+
+### TypeScript (Frontend)
+
+- **Components:** Break UI changes into small, reusable `<Component />` files under `frontend/src/components/`. Avoid large monolithic pages.
+- **Styling:** Use TailwindCSS utility classes only. Match the existing `soc-dark` theme variables. Do not introduce inline style objects unless absolutely necessary.
+- **Types:** All component props and API response shapes must be typed. Avoid `any`.
+
+---
+
+## Local Development Setup
+
+To run the stack locally for development (with hot-reload):
+
+```bash
+# Start infrastructure services only
+docker compose up -d db redis
+
+# Run the backend with hot-reload
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# In a separate terminal, run the Celery worker
+celery -A app.core.celery_app worker --loglevel=info
+
+# In a separate terminal, run the frontend dev server
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend dev server runs on port `3000` and proxies API calls to `localhost:8000`.
+
+---
+
+## Code of Conduct
+
+We are committed to a welcoming and respectful community. Please be kind and constructive in all interactions — in issues, pull requests, and discussions. Harassment or abusive behaviour of any kind will not be tolerated.
+
+---
 
 ## Getting Help
 
-If you run into issues launching your local development environment via `./install.sh`, please reach out via GitHub Issues! We monitor actively.
+If you run into problems getting your development environment running, please open an issue and paste the full output of the failing command. We actively monitor issues and will respond as quickly as we can.
 
-Thank you for contributing to the open-source security engineering community!
+Thank you for contributing to open-source security engineering.
