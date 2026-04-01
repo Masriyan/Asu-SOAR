@@ -1,6 +1,6 @@
 <div align="center">
 
-![ASUSOAR Banner](./frontend/public/banner.svg)
+![ASUSOAR Banner](./frontend/public/Banner.png)
 
 <br/>
 
