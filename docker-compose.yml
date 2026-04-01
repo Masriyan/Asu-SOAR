@@ -11,6 +11,11 @@ services:
     volumes:
       - asusoar_db_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-asusoar}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - asusoar-net
 
@@ -20,6 +25,11 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks:
       - asusoar-net
 
@@ -35,8 +45,10 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - asusoar-net
@@ -49,8 +61,12 @@ services:
     command: celery -A app.core.celery_app worker --loglevel=info
     environment: *backend-env
     depends_on:
-      - backend
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
     restart: unless-stopped
     networks:
       - asusoar-net
@@ -61,11 +77,12 @@ services:
       dockerfile: Dockerfile
     container_name: asusoar-frontend
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     restart: unless-stopped
     networks:
       - asusoar-net
