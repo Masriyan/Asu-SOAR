@@ -1,0 +1,78 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: asusoar-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-asusoar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-asusoar_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - asusoar_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - asusoar-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: asusoar-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - asusoar-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: asusoar-backend
+    environment: &backend-env
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-asusoar}:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-asusoar_dev}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-me}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    networks:
+      - asusoar-net
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: asusoar-worker
+    command: celery -A app.core.celery_app worker --loglevel=info
+    environment: *backend-env
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+    networks:
+      - asusoar-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: asusoar-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - asusoar-net
+
+volumes:
+  asusoar_db_data:
+
+networks:
+  asusoar-net:
+    driver: bridge
