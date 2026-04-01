@@ -25,7 +25,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.sockets import war_room
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(war_room.router, prefix="/ws/war-room", tags=["websockets"])
 
 @app.get("/")
 def read_root():

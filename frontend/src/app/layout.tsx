@@ -1,9 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import Sidebar from '@/components/Sidebar';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'ASUSOAR - Security Orchestration, Automation and Response',
@@ -17,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} bg-soc-dark text-white h-screen flex overflow-hidden`}>
+      <body className="bg-soc-dark text-white h-screen flex overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
           {children}
